@@ -97,8 +97,8 @@ modkey = "Mod4"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
 awful.layout.layouts = {
-    awful.layout.suit.floating,
     awful.layout.suit.tile,
+    awful.layout.suit.floating,
     awful.layout.suit.tile.left,
     awful.layout.suit.tile.bottom,
     awful.layout.suit.tile.top,
@@ -110,9 +110,6 @@ awful.layout.layouts = {
     awful.layout.suit.max.fullscreen,
     awful.layout.suit.magnifier,
     awful.layout.suit.corner.nw,
-    -- awful.layout.suit.corner.ne,
-    -- awful.layout.suit.corner.sw,
-    -- awful.layout.suit.corner.se,
 }
 
 -- Create custom widgets
@@ -125,66 +122,34 @@ local function create_widget(widget)
     }
 end
 
-
--- Update battery status every 30 seconds
-local battery_timer = gears.timer {
-    timeout = 30,
-    call_now = true,
-    autostart = true,
-    callback = update_battery
-}
-
--- Volume widget with controls
-local volume_widget = create_widget(wibox.widget.textbox())
-local function update_volume()
-    awful.spawn.easy_async([[bash -c "pamixer --get-volume-human"]],
-        function(stdout)
-            local volume = stdout:gsub("%%\n", "")
-            local icon = "󰕾"
-            if volume == "muted" then
-                icon = "󰖁"
-                volume = "M"
-            elseif tonumber(volume) == 0 then
-                icon = "󰕿"
-            elseif tonumber(volume) > 50 then
-                icon = "󰕾"
-            else
-                icon = "󰖀"
-            end
-            volume_widget:set_markup(string.format("%s %s", icon, volume))
-        end)
-end
-
--- Update volume on startup
-update_volume()
-
--- Add volume controls
-volume_widget:buttons(gears.table.join(
-    awful.button({ }, 1, function() -- left click
-        awful.spawn("pamixer -t")
-        update_volume()
-    end),
-    awful.button({ }, 4, function() -- scroll up
-        awful.spawn("pamixer -i 5")
-        update_volume()
-    end),
-    awful.button({ }, 5, function() -- scroll down
-        awful.spawn("pamixer -d 5")
-        update_volume()
-    end)
-))
-
--- Date widget with calendar popup
-local calendar_widget = awful.widget.calendar_popup.month()
-local date_widget = create_widget(wibox.widget.textclock("%a %b %d"))
-local time_widget = create_widget(wibox.widget.textclock("%H:%M"))
-calendar_widget:attach(date_widget, "tr")
-
--- Separator
-local separator = create_widget(wibox.widget.textbox("  |  "))
-
 -- Customize tag names with icons
 local tag_names = { "1", "2", "3", "4", "5", "6", "7", "8", "9" }
+
+awful.screen.connect_for_each_screen(function(s)
+    -- Wallpaper
+    set_wallpaper(s)
+
+    -- Each screen has its own tag table.
+    awful.tag(tag_names, s, awful.layout.layouts[1])
+
+    -- Create a promptbox for each screen
+    s.mypromptbox = awful.widget.prompt()
+    -- Create an imagebox widget which will contain an icon indicating which layout we're using.
+    -- We need one layoutbox per screen.
+    s.mylayoutbox = awful.widget.layoutbox(s)
+    s.mylayoutbox:buttons(gears.table.join(
+                           awful.button({ }, 1, function () awful.layout.inc( 1) end),
+                           awful.button({ }, 3, function () awful.layout.inc(-1) end),
+                           awful.button({ }, 4, function () awful.layout.inc( 1) end),
+                           awful.button({ }, 5, function () awful.layout.inc(-1) end)))
+end)
+
+-- {{{ Mouse bindings
+root.buttons(gears.table.join(
+    awful.button({ }, 3, function () mymainmenu:toggle() end),
+    awful.button({ }, 4, awful.tag.viewnext),
+    awful.button({ }, 5, awful.tag.viewprev)
+))
 -- }}}
 
 -- {{{ Menu
@@ -417,14 +382,6 @@ awful.screen.connect_for_each_screen(function(s)
         },
     }
 end)
--- }}}
-
--- {{{ Mouse bindings
-root.buttons(gears.table.join(
-    awful.button({ }, 3, function () mymainmenu:toggle() end),
-    awful.button({ }, 4, awful.tag.viewnext),
-    awful.button({ }, 5, awful.tag.viewprev)
-))
 -- }}}
 
 -- {{{ Key bindings
@@ -868,7 +825,5 @@ local function power_menu()
 end
 
 -- Autostart applications
-awful.spawn.with_shell("killall -q polybar")
-awful.spawn.with_shell("while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done")
-awful.spawn.with_shell("polybar main &")
+awful.spawn.with_shell("~/.config/polybar/launch.sh")
 awful.spawn.with_shell("picom --experimental-backends -b")
