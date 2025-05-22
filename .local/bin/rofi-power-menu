@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Options
+shutdown="⏻ Shutdown"
+reboot=" Reboot"
+suspend=" Sleep"
+logout=" Logout"
+
+# Get answer from user
+answer=$(echo -e "$shutdown\n$reboot\n$suspend\n$logout" | \
+    rofi -dmenu \
+        -i \
+        -p "Power Menu" \
+        -theme-str 'window {width: 300px;}')
+
+# Do something based on selected option
+case "$answer" in
+    "$shutdown")
+        systemctl poweroff
+        ;;
+    "$reboot")
+        systemctl reboot
+        ;;
+    "$suspend")
+        systemctl suspend
+        ;;
+    "$logout")
+        awesome-client 'awesome.quit()'
+        ;;
+esac 
