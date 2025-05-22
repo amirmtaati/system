@@ -1,0 +1,132 @@
+/* Rofi Configuration */
+/* Location: ~/.config/rofi/config.rasi */
+
+configuration {
+    modi: "drun,run,window,ssh";
+    width: 50;
+    lines: 15;
+    columns: 1;
+    font: "JetBrains Mono 12";
+    show-icons: true;
+    icon-theme: "Papirus";
+    terminal: "alacritty";
+    drun-display-format: "{icon} {name}";
+    location: 0;
+    disable-history: false;
+    hide-scrollbar: true;
+    display-drun: "  Apps ";
+    display-run: "  Run ";
+    display-window: " 﩯 Window";
+    display-Network: " 󰤨  Network";
+    sidebar-mode: true;
+    steal-focus: false;
+    eh: 1;
+    auto-select: false;
+    parse-hosts: true;
+    parse-known-hosts: true;
+}
+
+/* Catppuccin Mocha Theme */
+* {
+    bg0: #1e1e2e;
+    bg1: #313244;
+    bg2: #45475a;
+    bg3: #585b70;
+    fg0: #cdd6f4;
+    fg1: #bac2de;
+    fg2: #a6adc8;
+    red: #f38ba8;
+    green: #a6e3a1;
+    yellow: #f9e2af;
+    blue: #89b4fa;
+    magenta: #f5c2e7;
+    cyan: #94e2d5;
+
+    accent: @blue;
+    urgent: @red;
+
+    background-color: transparent;
+    text-color: @fg0;
+    margin: 0;
+    padding: 0;
+    spacing: 0;
+}
+
+window {
+    location: center;
+    width: 480;
+    border-radius: 8;
+    border: 2;
+    border-color: @bg2;
+    background-color: @bg0;
+}
+
+inputbar {
+    padding: 12;
+    spacing: 12;
+    children: [ icon-search, entry ];
+}
+
+icon-search {
+    expand: false;
+    filename: "search";
+    size: 28;
+}
+
+icon-search, entry, element-icon, element-text {
+    vertical-align: 0.5;
+}
+
+entry {
+    font: inherit;
+    placeholder-color: @fg2;
+    placeholder: "Search";
+    cursor: text;
+}
+
+message {
+    border: 2 0 0;
+    border-color: @bg1;
+    background-color: @bg1;
+}
+
+textbox {
+    padding: 8 24;
+}
+
+listview {
+    lines: 10;
+    columns: 1;
+    fixed-height: false;
+    border: 1 0 0;
+    border-color: @bg1;
+}
+
+element {
+    padding: 8 16;
+    spacing: 16;
+    cursor: pointer;
+}
+
+element normal active {
+    text-color: @accent;
+}
+
+element normal urgent {
+    text-color: @urgent;
+}
+
+element selected normal, element selected active, element selected urgent {
+    background-color: @accent;
+    text-color: @bg0;
+}
+
+element-icon {
+    size: 1em;
+    cursor: inherit;
+}
+
+element-text {
+    color: inherit;
+    cursor: inherit;
+}
