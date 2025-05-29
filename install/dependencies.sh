@@ -88,8 +88,6 @@ sudo apt install -y \
     python3 \
     python3-pip \
     python3-venv \
-    nodejs \
-    npm \
     default-jdk \
     maven \
     gradle \
@@ -100,6 +98,11 @@ sudo apt install -y \
     luarocks 
 
 print_success "Development tools installed"
+
+# Install Node.js using nvm
+print_status "Setting up Node.js environment..."
+bash "$(dirname "$0")/node.sh"
+print_success "Node.js environment setup completed"
 
 # Version control and collaboration
 print_status "Installing version control tools..."
@@ -190,7 +193,7 @@ print_status "Installing window manager..."
 sudo apt install -y \
     awesome \
     picom \
-    alacritty \
+    kitty \
     rofi \
     dunst \
     feh \
@@ -202,6 +205,11 @@ print_status "Cleaning up..."
 sudo apt autoremove -y
 sudo apt autoclean
 print_success "Cleanup completed"
+
+# Configure network and V2Ray
+print_status "Configuring network and V2Ray..."
+bash "$(dirname "$0")/network-config.sh"
+print_success "Network configuration completed"
 
 print_success "All installations completed successfully!"
 print_warning "Please reboot your system or log out and back in to ensure all changes take effect."

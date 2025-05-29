@@ -55,7 +55,7 @@ local function set_wallpaper(s)
     -- gears.wallpaper.set("#1e1e2e")
     
     -- If you want to use an image
-    gears.wallpaper.maximized("/home/amirmamad/Pictures/wallpapers/wallpaper-1.jpg", s)
+    gears.wallpaper.maximized("/home/amirmamad/Pictures/wallpapers/wallpaper-4.jpg", s)
 end
 
 -- Re-set wallpaper when a screen's geometry changes (e.g. different resolution)
@@ -83,7 +83,7 @@ beautiful.border_focus = "#bd93f9"
 beautiful.border_marked = "#ff5555"
 
 -- This is used later as the default terminal and editor to run.
-terminal = "alacritty"
+terminal = "kitty"
 editor = "emacsclient -c -a 'emacs'"  -- Use emacsclient, fallback to emacs
 browser = "firefox"
 file_manager = "thunar"

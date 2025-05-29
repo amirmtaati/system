@@ -6,7 +6,7 @@ My minimal Linux desktop setup using AwesomeWM and GNU Stow.
 
 ```bash
 # Dependencies
-sudo apt install awesome rofi alacritty thunar acpi pamixer stow
+sudo apt install awesome rofi kitty thunar acpi pamixer stow
 
 # Setup
 git clone https://github.com/amirmtaati/system.git
@@ -28,7 +28,7 @@ cd system
 - AwesomeWM (Window Manager)
 - Polybar (Status Bar)
 - Rofi (Launcher)
-- Alacritty (Terminal)
+- Kitty (Terminal)
 - Picom (Compositor)
 
 ```bash
