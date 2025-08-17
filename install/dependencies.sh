@@ -83,7 +83,6 @@ sudo apt install -y \
     ca-certificates \
     gnupg \
     lsb-release \
-    software-properties-common \
     build-essential \
     git \
     curl \
@@ -91,8 +90,6 @@ sudo apt install -y \
     stow \
     htop \
     btop \
-    neofetch \
-    fastfetch \
     tree \
     unzip \
     zip \
@@ -102,8 +99,17 @@ sudo apt install -y \
     tmux \
     screen \
     vim \
-    nano \
-    micro
+    nano
+
+# Install optional packages that might not be available
+for pkg in software-properties-common neofetch fastfetch micro; do
+    if sudo apt install -y "$pkg" 2>/dev/null; then
+        print_success "$pkg installed"
+    else
+        print_warning "$pkg not available, skipping"
+    fi
+done
+
 print_success "Basic tools installed"
 
 # Development tools
@@ -168,20 +174,18 @@ sudo apt install -y \
     ripgrep \
     fd-find \
     bat \
-    eza \
-    zoxide \
     shellcheck \
-    shfmt \
-    starship \
-    tldr \
-    duf \
-    dust \
-    procs \
-    bandwhich \
-    bottom \
-    hyperfine \
-    delta \
-    lsd
+    shfmt
+
+# Install optional terminal tools that might not be available
+for pkg in eza zoxide starship tldr duf dust procs bandwhich bottom hyperfine delta lsd; do
+    if sudo apt install -y "$pkg" 2>/dev/null; then
+        print_success "$pkg installed"
+    else
+        print_warning "$pkg not available in repositories, you can install it later via cargo/snap"
+    fi
+done
+
 print_success "Terminal enhancements installed"
 
 # Try to install latest Neovim from backports, fallback to main
@@ -200,16 +204,23 @@ print_success "Text editors installed"
 # LaTeX and document processing
 print_status "Installing LaTeX and document tools..."
 sudo apt install -y \
-    texlive-full \
+    texlive-latex-base \
+    texlive-latex-recommended \
     texlive-latex-extra \
     texlive-fonts-recommended \
     texlive-fonts-extra \
     texlive-lang-european \
-    texlive-lang-other \
-    texlive-bibtex-extra \
-    biber \
-    pandoc \
-    typst
+    pandoc
+
+# Install optional LaTeX packages
+for pkg in texlive-full texlive-bibtex-extra biber typst; do
+    if sudo apt install -y "$pkg" 2>/dev/null; then
+        print_success "$pkg installed"
+    else
+        print_warning "$pkg not available, continuing with basic LaTeX installation"
+    fi
+done
+
 print_success "LaTeX and document tools installed"
 
 # Media and graphics tools
@@ -237,23 +248,23 @@ print_success "Media and graphics tools installed"
 # Fonts and icons
 print_status "Installing fonts and icons..."
 sudo apt install -y \
-    fonts-firacode \
-    fonts-hack \
-    fonts-inconsolata \
-    fonts-jetbrains-mono \
     fonts-liberation \
     fonts-noto \
     fonts-noto-color-emoji \
     fonts-open-sans \
     fonts-roboto \
-    fonts-font-awesome \
-    fonts-cascadia-code \
-    fonts-ubuntu \
-    papirus-icon-theme \
-    arc-theme \
-    adwaita-icon-theme-full
+    fonts-ubuntu
 
-print_success "Fonts and icons installed"
+# Install optional fonts that might not be available
+for pkg in fonts-firacode fonts-hack fonts-inconsolata fonts-jetbrains-mono fonts-font-awesome fonts-cascadia-code papirus-icon-theme arc-theme adwaita-icon-theme-full; do
+    if sudo apt install -y "$pkg" 2>/dev/null; then
+        print_success "$pkg installed"
+    else
+        print_warning "$pkg not available, skipping"
+    fi
+done
+
+print_success "Core fonts and icons installed"
 
 # PDF and document viewers
 print_status "Installing document viewers..."
@@ -279,19 +290,18 @@ sudo apt install -y \
     i3lock \
     picom \
     kitty \
-    alacritty \
-    wezterm \
     rofi \
-    wofi \
     dunst \
-    mako-notifier \
-    feh \
-    nitrogen \
-    polybar \
-    waybar \
-    papirus-icon-theme \
-    arc-theme \
-    materia-gtk-theme
+    feh
+
+# Install optional desktop tools
+for pkg in alacritty wezterm wofi mako-notifier nitrogen polybar waybar papirus-icon-theme arc-theme materia-gtk-theme; do
+    if sudo apt install -y "$pkg" 2>/dev/null; then
+        print_success "$pkg installed"
+    else
+        print_warning "$pkg not available, skipping"
+    fi
+done
 
 print_success "Window manager and desktop tools installed"
 
@@ -356,10 +366,16 @@ sudo apt install -y \
     nethogs \
     iftop \
     glances \
-    ncdu \
-    stress-ng \
-    sysbench \
-    perf-tools-unstable
+    ncdu
+
+# Install optional monitoring tools
+for pkg in stress-ng sysbench perf-tools-unstable; do
+    if sudo apt install -y "$pkg" 2>/dev/null; then
+        print_success "$pkg installed"
+    else
+        print_warning "$pkg not available, skipping"
+    fi
+done
 
 print_success "System monitoring tools installed"
 
@@ -378,13 +394,18 @@ print_success "Database tools installed"
 print_status "Installing security tools..."
 sudo apt install -y \
     gpg \
-    pass \
     keepassxc \
     firejail \
-    apparmor \
-    fail2ban \
-    rkhunter \
-    chkrootkit
+    apparmor
+
+# Install optional security tools
+for pkg in pass fail2ban rkhunter chkrootkit; do
+    if sudo apt install -y "$pkg" 2>/dev/null; then
+        print_success "$pkg installed"
+    else
+        print_warning "$pkg not available, skipping"
+    fi
+done
 
 print_success "Security tools installed"
 
