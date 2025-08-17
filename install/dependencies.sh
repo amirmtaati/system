@@ -30,6 +30,31 @@ print_error() {
     echo -e "${RED}[✗]${NC} $1"
 }
 
+# Function to safely install packages
+safe_install() {
+    local packages=("$@")
+    local failed_packages=()
+    
+    for package in "${packages[@]}"; do
+        if sudo apt install -y "$package" 2>/dev/null; then
+            print_success "$package installed"
+        else
+            print_warning "$package installation failed, skipping"
+            failed_packages+=("$package")
+        fi
+    done
+    
+    if [ ${#failed_packages[@]} -gt 0 ]; then
+        print_warning "Failed to install: ${failed_packages[*]}"
+    fi
+}
+
+# Check if running with correct privileges
+if [ "$EUID" -eq 0 ]; then
+    print_error "Please do not run this script as root"
+    exit 1
+fi
+
 # Clean up old backports from Debian 12 (Bookworm)
 print_status "Cleaning up old Debian 12 backports..."
 sudo rm -f /etc/apt/sources.list.d/backports.list
@@ -43,9 +68,13 @@ print_success "System updated"
 
 # Add Debian 13 (Trixie) backports for bleeding edge packages
 print_status "Adding Debian 13 (Trixie) backports..."
-echo "deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware" | sudo tee /etc/apt/sources.list.d/trixie-backports.list
-sudo apt update
-print_success "Trixie backports enabled"
+if [ "$(lsb_release -sc)" = "trixie" ]; then
+    echo "deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware" | sudo tee /etc/apt/sources.list.d/trixie-backports.list
+    sudo apt update
+    print_success "Trixie backports enabled"
+else
+    print_warning "Not running Trixie, skipping backports setup"
+fi
 
 # Basic system tools
 print_status "Installing basic system tools..."
@@ -192,9 +221,16 @@ sudo apt install -y \
     inkscape \
     imagemagick \
     ffmpeg \
-    obs-studio \
-    audacity \
-    blender
+    audacity
+
+# Try to install optional packages that might not be available
+for pkg in obs-studio blender; do
+    if sudo apt install -y "$pkg" 2>/dev/null; then
+        print_success "$pkg installed"
+    else
+        print_warning "$pkg not available, skipping"
+    fi
+done
 
 print_success "Media and graphics tools installed"
 
@@ -261,25 +297,37 @@ print_success "Window manager and desktop tools installed"
 
 # Container and virtualization tools
 print_status "Installing container and virtualization tools..."
-# Add Docker repository for latest version
-curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian trixie stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt update
 
-sudo apt install -y \
-    docker-ce \
-    docker-ce-cli \
-    containerd.io \
-    docker-buildx-plugin \
-    docker-compose-plugin \
-    podman \
-    qemu-system \
-    libvirt-daemon-system \
-    virt-manager
+# Try to add Docker repository
+print_status "Attempting to add Docker repository..."
+if curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg 2>/dev/null; then
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian trixie stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    if sudo apt update && sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>/dev/null; then
+        print_success "Docker installed from official repository"
+        # Add user to docker group
+        sudo usermod -aG docker "$USER"
+        print_success "User added to docker group"
+    else
+        print_warning "Docker installation from official repo failed, trying from main repository"
+        sudo apt install -y docker.io docker-compose podman 2>/dev/null || print_warning "Docker installation failed"
+    fi
+else
+    print_warning "Could not add Docker repository, installing from main repository"
+    sudo apt install -y docker.io docker-compose podman 2>/dev/null || print_warning "Docker installation failed"
+fi
 
-# Add user to docker group
-sudo usermod -aG docker "$USER"
-print_success "Container and virtualization tools installed"
+# Install other virtualization tools
+sudo apt install -y qemu-system libvirt-daemon-system 2>/dev/null || print_warning "QEMU/libvirt installation failed"
+
+# Try to install virt-manager (might not be available)
+if sudo apt install -y virt-manager 2>/dev/null; then
+    print_success "virt-manager installed"
+else
+    print_warning "virt-manager not available, skipping"
+fi
+
+print_success "Container and virtualization tools setup completed"
 
 # Network tools
 print_status "Installing network tools..."
@@ -357,33 +405,51 @@ print_success "Archive and compression tools installed"
 
 # Communication tools
 print_status "Installing communication tools..."
-sudo apt install -y \
-    thunderbird \
-    signal-desktop \
-    telegram-desktop \
-    discord \
-    element-desktop
+sudo apt install -y thunderbird
 
-print_success "Communication tools installed"
+# Try to install optional packages that might not be available in main repos
+for pkg in signal-desktop telegram-desktop discord element-desktop; do
+    if sudo apt install -y "$pkg" 2>/dev/null; then
+        print_success "$pkg installed"
+    else
+        print_warning "$pkg not available in main repositories, skipping"
+    fi
+done
+
+print_success "Core communication tools installed"
 
 # Web browsers
 print_status "Installing web browsers..."
-# Add Google Chrome repository
-wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+# Install Firefox ESR and Chromium from main repos
+sudo apt install -y firefox-esr chromium
 
-# Add Microsoft Edge repository
-curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-edge-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-edge-keyring.gpg] https://packages.microsoft.com/repos/edge stable main" | sudo tee /etc/apt/sources.list.d/microsoft-edge.list
+# Try to add and install Chrome
+print_status "Attempting to add Google Chrome repository..."
+if wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg 2>/dev/null; then
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list > /dev/null
+    if sudo apt update && sudo apt install -y google-chrome-stable 2>/dev/null; then
+        print_success "Google Chrome installed"
+    else
+        print_warning "Google Chrome installation failed, continuing without it"
+    fi
+else
+    print_warning "Could not add Google Chrome repository, skipping"
+fi
 
-sudo apt update
-sudo apt install -y \
-    firefox-esr \
-    chromium \
-    google-chrome-stable \
-    microsoft-edge-stable
+# Try to add and install Microsoft Edge
+print_status "Attempting to add Microsoft Edge repository..."
+if curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-edge-keyring.gpg 2>/dev/null; then
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-edge-keyring.gpg] https://packages.microsoft.com/repos/edge stable main" | sudo tee /etc/apt/sources.list.d/microsoft-edge.list > /dev/null
+    if sudo apt update && sudo apt install -y microsoft-edge-stable 2>/dev/null; then
+        print_success "Microsoft Edge installed"
+    else
+        print_warning "Microsoft Edge installation failed, continuing without it"
+    fi
+else
+    print_warning "Could not add Microsoft Edge repository, skipping"
+fi
 
-print_success "Web browsers installed"
+print_success "Core web browsers installed"
 
 # Final cleanup
 print_status "Cleaning up..."
