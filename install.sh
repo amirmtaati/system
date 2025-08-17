@@ -52,14 +52,18 @@ fi
 # Check if script is run as root
 if [ "$EUID" -eq 0 ]; then
     print_error "Please do not run this script as root"
+    print_status "Run this script as a regular user: ./install.sh"
     exit 1
 fi
 
 # Check if user has sudo privileges
-if ! sudo -n true 2>/dev/null; then
-    print_error "This script requires sudo privileges"
+print_status "Checking sudo privileges..."
+if ! sudo -v; then
+    print_error "This script requires sudo privileges. Please ensure your user is in the sudo group."
+    print_status "To add your user to sudo group: su -c 'usermod -aG sudo $USER'"
     exit 1
 fi
+print_success "Sudo access confirmed"
 
 print_status "Starting full system install for Debian 13 development environment..."
 
