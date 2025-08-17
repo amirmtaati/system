@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Enhanced Debian Developer Dependencies Installation Script
+# Enhanced Debian 13 (Trixie) Developer Dependencies Installation Script
 # This script installs essential development tools and software
 
 set -e  # Exit on any error
 
-echo "[*] Starting comprehensive developer environment setup..."
+echo "[*] Starting comprehensive developer environment setup for Debian 13..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -30,16 +30,22 @@ print_error() {
     echo -e "${RED}[✗]${NC} $1"
 }
 
+# Clean up old backports from Debian 12 (Bookworm)
+print_status "Cleaning up old Debian 12 backports..."
+sudo rm -f /etc/apt/sources.list.d/backports.list
+sudo rm -f /etc/apt/sources.list.d/*bookworm*
+print_success "Old backports cleaned up"
+
 # Update system
 print_status "Updating system packages..."
 sudo apt update && sudo apt upgrade -y
 print_success "System updated"
 
-# Enable backports for latest software versions
-print_status "Enabling Debian backports..."
-echo "deb http://deb.debian.org/debian $(lsb_release -sc)-backports main" | sudo tee /etc/apt/sources.list.d/backports.list
+# Add Debian 13 (Trixie) backports for bleeding edge packages
+print_status "Adding Debian 13 (Trixie) backports..."
+echo "deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware" | sudo tee /etc/apt/sources.list.d/trixie-backports.list
 sudo apt update
-print_success "Backports enabled"
+print_success "Trixie backports enabled"
 
 # Basic system tools
 print_status "Installing basic system tools..."
@@ -57,6 +63,7 @@ sudo apt install -y \
     htop \
     btop \
     neofetch \
+    fastfetch \
     tree \
     unzip \
     zip \
@@ -66,7 +73,8 @@ sudo apt install -y \
     tmux \
     screen \
     vim \
-    nano
+    nano \
+    micro
 print_success "Basic tools installed"
 
 # Development tools
@@ -77,6 +85,7 @@ sudo apt install -y \
     make \
     cmake \
     ninja-build \
+    meson \
     pkg-config \
     autoconf \
     automake \
@@ -84,18 +93,23 @@ sudo apt install -y \
     gdb \
     valgrind \
     clang \
+    clang-format \
+    clang-tidy \
     lldb \
     python3 \
     python3-pip \
     python3-venv \
+    python3-dev \
     default-jdk \
+    openjdk-21-jdk \
     maven \
     gradle \
     rustc \
     cargo \
     golang-go \
     lua5.4 \
-    luarocks 
+    luarocks \
+    julia
 
 print_success "Development tools installed"
 
@@ -112,27 +126,46 @@ sudo apt install -y \
     gitk \
     git-gui \
     tig \
-    gh
+    gh \
+    lazygit
 print_success "Version control tools installed"
 
 # Terminal and shell enhancements
 print_status "Installing terminal enhancements..."
 sudo apt install -y \
     zsh \
+    fish \
     fzf \
     ripgrep \
     fd-find \
     bat \
-    exa \
+    eza \
     zoxide \
     shellcheck \
-    shfmt
+    shfmt \
+    starship \
+    tldr \
+    duf \
+    dust \
+    procs \
+    bandwhich \
+    bottom \
+    hyperfine \
+    delta \
+    lsd
 print_success "Terminal enhancements installed"
 
-# Text editors and IDEs
+# Try to install latest Neovim from backports, fallback to main
 print_status "Installing text editors..."
-# Install latest Emacs from backports
-sudo apt install -y -t $(lsb_release -sc)-backports emacs
+if sudo apt install -y -t trixie-backports neovim 2>/dev/null; then
+    print_success "Neovim installed from backports"
+else
+    print_warning "Backports Neovim not available, installing from main repository"
+    sudo apt install -y neovim
+fi
+
+# Install Emacs (should be latest in Trixie)
+sudo apt install -y emacs
 print_success "Text editors installed"
 
 # LaTeX and document processing
@@ -146,7 +179,8 @@ sudo apt install -y \
     texlive-lang-other \
     texlive-bibtex-extra \
     biber \
-    pandoc 
+    pandoc \
+    typst
 print_success "LaTeX and document tools installed"
 
 # Media and graphics tools
@@ -155,9 +189,14 @@ sudo apt install -y \
     mpv \
     vlc \
     gimp \
+    inkscape \
     imagemagick \
     ffmpeg \
+    obs-studio \
     audacity \
+    blender
+
+print_success "Media and graphics tools installed"
 
 # Fonts and icons
 print_status "Installing fonts and icons..."
@@ -172,7 +211,11 @@ sudo apt install -y \
     fonts-open-sans \
     fonts-roboto \
     fonts-font-awesome \
+    fonts-cascadia-code \
+    fonts-ubuntu \
     papirus-icon-theme \
+    arc-theme \
+    adwaita-icon-theme-full
 
 print_success "Fonts and icons installed"
 
@@ -183,22 +226,164 @@ sudo apt install -y \
     zathura-pdf-poppler \
     zathura-ps \
     zathura-djvu \
+    zathura-cb \
     evince \
     okular \
-    xpdf
+    xpdf \
+    qpdfview
 
 print_success "Document viewers installed"
 
-print_status "Installing window manager..."
+# Window manager and desktop environment tools
+print_status "Installing window manager and desktop tools..."
 sudo apt install -y \
     awesome \
+    i3-wm \
+    i3status \
+    i3lock \
     picom \
     kitty \
+    alacritty \
+    wezterm \
     rofi \
+    wofi \
     dunst \
+    mako-notifier \
     feh \
-    papirus-icon-theme arc-theme \
+    nitrogen \
+    polybar \
+    waybar \
+    papirus-icon-theme \
+    arc-theme \
+    materia-gtk-theme
 
+print_success "Window manager and desktop tools installed"
+
+# Container and virtualization tools
+print_status "Installing container and virtualization tools..."
+# Add Docker repository for latest version
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian trixie stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+
+sudo apt install -y \
+    docker-ce \
+    docker-ce-cli \
+    containerd.io \
+    docker-buildx-plugin \
+    docker-compose-plugin \
+    podman \
+    qemu-system \
+    libvirt-daemon-system \
+    virt-manager
+
+# Add user to docker group
+sudo usermod -aG docker "$USER"
+print_success "Container and virtualization tools installed"
+
+# Network tools
+print_status "Installing network tools..."
+sudo apt install -y \
+    nmap \
+    netcat-openbsd \
+    tcpdump \
+    wireshark \
+    iperf3 \
+    mtr \
+    dnsutils \
+    whois \
+    curl \
+    wget \
+    httpie \
+    aria2
+
+print_success "Network tools installed"
+
+# System monitoring and performance tools
+print_status "Installing system monitoring tools..."
+sudo apt install -y \
+    htop \
+    btop \
+    iotop \
+    nethogs \
+    iftop \
+    glances \
+    ncdu \
+    stress-ng \
+    sysbench \
+    perf-tools-unstable
+
+print_success "System monitoring tools installed"
+
+# Database tools
+print_status "Installing database tools..."
+sudo apt install -y \
+    sqlite3 \
+    postgresql-client \
+    mysql-client \
+    redis-tools \
+    mongodb-clients
+
+print_success "Database tools installed"
+
+# Security tools
+print_status "Installing security tools..."
+sudo apt install -y \
+    gpg \
+    pass \
+    keepassxc \
+    firejail \
+    apparmor \
+    fail2ban \
+    rkhunter \
+    chkrootkit
+
+print_success "Security tools installed"
+
+# Archive and compression tools
+print_status "Installing archive and compression tools..."
+sudo apt install -y \
+    zip \
+    unzip \
+    p7zip-full \
+    rar \
+    unrar \
+    xz-utils \
+    zstd \
+    lz4 \
+    brotli
+
+print_success "Archive and compression tools installed"
+
+# Communication tools
+print_status "Installing communication tools..."
+sudo apt install -y \
+    thunderbird \
+    signal-desktop \
+    telegram-desktop \
+    discord \
+    element-desktop
+
+print_success "Communication tools installed"
+
+# Web browsers
+print_status "Installing web browsers..."
+# Add Google Chrome repository
+wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+
+# Add Microsoft Edge repository
+curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-edge-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-edge-keyring.gpg] https://packages.microsoft.com/repos/edge stable main" | sudo tee /etc/apt/sources.list.d/microsoft-edge.list
+
+sudo apt update
+sudo apt install -y \
+    firefox-esr \
+    chromium \
+    google-chrome-stable \
+    microsoft-edge-stable
+
+print_success "Web browsers installed"
 
 # Final cleanup
 print_status "Cleaning up..."
@@ -208,9 +393,14 @@ print_success "Cleanup completed"
 
 # Configure network and V2Ray
 print_status "Configuring network and V2Ray..."
-bash "$(dirname "$0")/network-config.sh"
-print_success "Network configuration completed"
+if [ -f "$(dirname "$0")/network-config.sh" ]; then
+    bash "$(dirname "$0")/network-config.sh"
+    print_success "Network configuration completed"
+else
+    print_warning "Network configuration script not found, skipping..."
+fi
 
 print_success "All installations completed successfully!"
 print_warning "Please reboot your system or log out and back in to ensure all changes take effect."
+print_status "Docker group membership will be active after logout/login."
 print_status "Some applications may require additional configuration."
